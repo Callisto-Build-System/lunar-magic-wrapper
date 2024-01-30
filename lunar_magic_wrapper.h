@@ -44,6 +44,10 @@ namespace lunar_magic_wrapper {
     class LunarMagicWrapper {
     private:
         const fs::path lunar_magic_path;
+        // TODO get lunar magic version and store it
+
+        // TODO ensure_version(low, high) function to ensure function is actually available in that LM version (?)
+        // might not be strictly necessary, if it's not available it'll error out anyway
 
         static std::string romSizeToString(ROMSize rom_size);
 
