@@ -1,4 +1,4 @@
-#include "lunar_magic_wrapper.h"
+#include "../include/lunar_magic_wrapper.h"
 
 namespace lunar_magic_wrapper {
     std::string LunarMagicWrapper::romSizeToString(ROMSize rom_size) {
