@@ -50,8 +50,8 @@ protected:
     }
 
     static void SetUpROM(const fs::path& original_rom) {
-        fs::copy_file(original_rom, ROM_PATH);
-        fs::copy_file(original_rom, OUT_ROM_PATH);
+        fs::copy_file(original_rom, ROM_PATH, fs::copy_options::overwrite_existing);
+        fs::copy_file(original_rom, OUT_ROM_PATH, fs::copy_options::overwrite_existing);
     }
 
     void SetUp() override {
@@ -85,11 +85,6 @@ protected:
 
         in_levels = MakePath(LEVELS_PATH);
         out_levels = LEVELS_PATH;
-    }
-
-    void TearDown() override {
-        fs::remove(ROM_PATH);
-        fs::remove(OUT_ROM_PATH);
     }
 };
 

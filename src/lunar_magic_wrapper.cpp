@@ -37,193 +37,224 @@ namespace lunar_magic_wrapper {
         throw std::runtime_error("Unknown compression option passed");
     }
 
-    void LunarMagicWrapper::exportGFX(const fs::path &rom_path) {
-        auto succeeded{ call(fmt::format(R"(-ExportGFX "{}")", rom_path.string())) };
+    Result LunarMagicWrapper::exportGFX(const fs::path &rom_path) {
+        auto result{ call(fmt::format(R"(-ExportGFX "{}")", rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to export GFX from '{}' using '{}'",
                 rom_path.string(),
-                lunar_magic_path.string()
-            ));
+                lunar_magic_path.string()),
+                result
+            );
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::exportExGFX(const fs::path &rom_path) {
-        auto succeeded{ call(fmt::format(R"(-ExportExGFX "{}")", rom_path.string())) };
+    Result LunarMagicWrapper::exportExGFX(const fs::path &rom_path) {
+        auto result{ call(fmt::format(R"(-ExportExGFX "{}")", rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to export ExGFX from '{}' using '{}'",
                 rom_path.string(),
                 lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::importGFX(const fs::path &rom_path) {
-        auto succeeded{ call(fmt::format(R"(-ImportExGFX "{}")", rom_path.string())) };
+    Result LunarMagicWrapper::importGFX(const fs::path &rom_path) {
+        auto result{ call(fmt::format(R"(-ImportExGFX "{}")", rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to import GFX into '{}' using '{}'",
                 rom_path.string(),
                 lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::importExGFX(const fs::path &rom_path) {
-        auto succeeded{ call(fmt::format(R"(-ImportExGFX "{}")", rom_path.string())) };
+    Result LunarMagicWrapper::importExGFX(const fs::path &rom_path) {
+        auto result{ call(fmt::format(R"(-ImportExGFX "{}")", rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to import ExGFX into '{}' using '{}'",
                 rom_path.string(),
                 lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::importAllGraphics(const fs::path &rom_path) {
-        auto succeeded{ call(fmt::format(R"(-ImportAllGraphics "{}")", rom_path.string())) };
+    Result LunarMagicWrapper::importAllGraphics(const fs::path &rom_path) {
+        auto result{ call(fmt::format(R"(-ImportAllGraphics "{}")", rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to import all graphics into '{}' using '{}'",
                 rom_path.string(),
                 lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::exportLevel(const fs::path &rom_path, const fs::path &mwl_path, uint16_t level_number) {
-        auto succeeded{ call(fmt::format(R"(-ExportLevel "{}" "{}" {:X})", rom_path.string(), mwl_path.string(), level_number)) };
+    Result LunarMagicWrapper::exportLevel(const fs::path &rom_path, const fs::path &mwl_path, uint16_t level_number) {
+        auto result{ call(fmt::format(R"(-ExportLevel "{}" "{}" {:X})", rom_path.string(), mwl_path.string(), level_number)) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to export level {:03X} from '{}' to '{}' using '{}'",
                 level_number,
                 rom_path.string(),
                 mwl_path.string(),
                 lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::importLevel(const fs::path &rom_path, const fs::path &mwl_path,
+    Result LunarMagicWrapper::importLevel(const fs::path &rom_path, const fs::path &mwl_path,
                                        std::optional<uint16_t> level_number) {
         if (level_number) {
-            auto succeeded{ call(fmt::format(R"(-ImportLevel "{}" "{}" {:X})", rom_path.string(),
+            auto result{ call(fmt::format(R"(-ImportLevel "{}" "{}" {:X})", rom_path.string(),
                                              mwl_path.string(), *level_number)) };
 
-            if (!succeeded) {
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                     "Failed to import level {:03X} from '{}' into '{}' using '{}'",
                     *level_number, mwl_path.string(), rom_path.string(),
                     lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         } else {
-            auto succeeded{ call(fmt::format(R"(-ImportLevel "{}" "{}")", rom_path.string(), mwl_path.string())) };
-            if (!succeeded) {
+            auto result{ call(fmt::format(R"(-ImportLevel "{}" "{}")", rom_path.string(), mwl_path.string())) };
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                     "Failed to import level from '{}' into '{}' using '{}'",
                     mwl_path.string(), rom_path.string(),
                     lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         }
     }
 
-    void LunarMagicWrapper::importMap16(const fs::path &rom_path, const fs::path &map16_path, uint16_t level_number,
+    Result LunarMagicWrapper::importMap16(const fs::path &rom_path, const fs::path &map16_path, uint16_t level_number,
                                        std::optional<std::pair<size_t, size_t>> coordinates) {
         // TODO check why this has a level number parameter (it's not documented ...)
 
         if (coordinates) {
             // TODO check if this is actually how coordinates are handled (it's not documented ...)
-            auto succeeded{ call(fmt::format(R"(-ImportMap16 "{}" "{}" {:X} {:X},{:X})", rom_path.string(), map16_path.string(),
+            auto result{ call(fmt::format(R"(-ImportMap16 "{}" "{}" {:X} {:X},{:X})", rom_path.string(), map16_path.string(),
                                     level_number, coordinates->first, coordinates->second)) };
 
-            if (!succeeded) {
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                         "Failed to import map16 file '{}' into level {:03X} of '{}' at coordinates X={:X}, Y={:X} "
                         "using '{}'",
                         map16_path.string(), level_number, rom_path.string(), coordinates->first, coordinates->second,
                         lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         } else {
-            auto succeeded{ call(fmt::format(R"(-ImportMap16 "{}" "{}" {:X})", rom_path.string(), map16_path.string(),
+            auto result{ call(fmt::format(R"(-ImportMap16 "{}" "{}" {:X})", rom_path.string(), map16_path.string(),
                                     level_number)) };
 
-            if (!succeeded) {
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                         "Failed to import map16 file '{}' into level {:03X} of '{}' using '{}'",
                         map16_path.string(), level_number, rom_path.string(), lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         }
     }
 
-    void LunarMagicWrapper::importCustomPalette(const fs::path &rom_path, const fs::path &palette_path,
+    Result LunarMagicWrapper::importCustomPalette(const fs::path &rom_path, const fs::path &palette_path,
                                                 uint16_t level_number) {
-        auto succeeded{ call(fmt::format(R"(-ImportCustomPalette "{}" "{}" {:X})", rom_path.string(), palette_path.string(),
+        auto result{ call(fmt::format(R"(-ImportCustomPalette "{}" "{}" {:X})", rom_path.string(), palette_path.string(),
                                 level_number)) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to import custom palette '{}' into level {:03X} of '{}' using '{}'",
                 palette_path.string(), level_number, rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::exportSharedPalette(const fs::path &rom_path, const fs::path &shared_palette_path) {
-        auto succeeded{ call(fmt::format(R"(-ExportSharedPalette "{}" {})", rom_path.string(), shared_palette_path.string())) };
+    Result LunarMagicWrapper::exportSharedPalette(const fs::path &rom_path, const fs::path &shared_palette_path) {
+        auto result{ call(fmt::format(R"(-ExportSharedPalette "{}" {})", rom_path.string(), shared_palette_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to export shared palette to '{}' from '{}' using '{}'",
                 shared_palette_path.string(), rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::importSharedPalette(const fs::path &rom_path, const fs::path &shared_palette_path) {
-        auto succeeded{ call(fmt::format(R"(-ImportSharedPalette "{}" {})", rom_path.string(), shared_palette_path.string())) };
+    Result LunarMagicWrapper::importSharedPalette(const fs::path &rom_path, const fs::path &shared_palette_path) {
+        auto result{ call(fmt::format(R"(-ImportSharedPalette "{}" {})", rom_path.string(), shared_palette_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to import shared palette '{}' into '{}' using '{}'",
                 shared_palette_path.string(), rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::exportAllMap16(const fs::path &rom_path, const fs::path &all_map16_path) {
-        auto succeeded{ call(fmt::format(R"(-ExportAllMap16 "{}" {})", rom_path.string(), all_map16_path.string())) };
+    Result LunarMagicWrapper::exportAllMap16(const fs::path &rom_path, const fs::path &all_map16_path) {
+        auto result{ call(fmt::format(R"(-ExportAllMap16 "{}" {})", rom_path.string(), all_map16_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to export all map16 file to '{}' from '{}' using '{}'",
                 all_map16_path.string(), rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::importAllMap16(const fs::path &rom_path, const fs::path &all_map16_path) {
-        auto succeeded{ call(fmt::format(R"(-ImportAllMap16 "{}" {})", rom_path.string(), all_map16_path.string())) };
+    Result LunarMagicWrapper::importAllMap16(const fs::path &rom_path, const fs::path &all_map16_path) {
+        auto result{ call(fmt::format(R"(-ImportAllMap16 "{}" {})", rom_path.string(), all_map16_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to import all map16 file '{}' into '{}' using '{}'",
                 all_map16_path.string(), rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::exportMultipleLevels(const fs::path &rom_path, const fs::path &directory_path,
+    Result LunarMagicWrapper::exportMultipleLevels(const fs::path &rom_path, const fs::path &directory_path,
                                                  const std::string &file_name_start,
                                                  std::optional<LevelExportOption> options) {
         auto full_path{ directory_path };
@@ -231,149 +262,173 @@ namespace lunar_magic_wrapper {
 
         if (options) {
             const auto options_as_int{ static_cast<size_t>(*options) };
-            auto succeeded{ call(fmt::format(R"(-ExportMultLevels "{}" "{}" {:X})",
+            auto result{ call(fmt::format(R"(-ExportMultLevels "{}" "{}" {:X})",
                                              rom_path.string(), full_path.string(), options_as_int)) };
-            if (!succeeded) {
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                     "Failed to export multiple levels with prefix '{}' to '{}' from '{}' with options '{:X}' using '{}'",
                     file_name_start, directory_path.string(), rom_path.string(), options_as_int,
                     lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         } else {
-            auto succeeded{ call(fmt::format(R"(-ExportMultLevels "{}" "{}")",
+            auto result{ call(fmt::format(R"(-ExportMultLevels "{}" "{}")",
                                              rom_path.string(), full_path.string())) };
-            if (!succeeded) {
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                         "Failed to export multiple levels with prefix '{}' to '{}' from '{}' using '{}'",
                         file_name_start, directory_path.string(), rom_path.string(),
                         lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         }
     }
 
-    void LunarMagicWrapper::importMultipleLevels(const fs::path &rom_path, const fs::path &directory_path,
+    Result LunarMagicWrapper::importMultipleLevels(const fs::path &rom_path, const fs::path &directory_path,
                                                  std::optional<LevelImportOption> options) {
         if (options) {
             const auto options_as_int{ static_cast<size_t>(*options) };
 
-            auto succeeded{ call(fmt::format(R"(-ImportMultLevels "{}" "{}" {:X})",
+            auto result{ call(fmt::format(R"(-ImportMultLevels "{}" "{}" {:X})",
                                              rom_path.string(), directory_path.string(), options_as_int)) };
 
-            if (!succeeded) {
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                     "Failed to import multiple levels from '{}' into '{}' with options '{:X}' using '{}'",
                     directory_path.string(), rom_path.string(), options_as_int, lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         } else {
-            auto succeeded{ call(fmt::format(R"(-ImportMultLevels "{}" "{}")",
+            auto result{ call(fmt::format(R"(-ImportMultLevels "{}" "{}")",
                                              rom_path.string(), directory_path.string())) };
 
-            if (!succeeded) {
+            if (!result.succeeded) {
                 throw LunarMagicWrapperException(fmt::format(
                     "Failed to import multiple levels from '{}' into '{}' using '{}'",
                     directory_path.string(), rom_path.string(), lunar_magic_path.string()
-                ));
+                ), result);
             }
+
+            return result;
         }
     }
 
-    void LunarMagicWrapper::expandROM(const fs::path &rom_path, ROMSize rom_size) {
-        auto succeeded{ call(fmt::format(R"(-ExpandROM "{}" {})", rom_path.string(), romSizeToString(rom_size))) };
+    Result LunarMagicWrapper::expandROM(const fs::path &rom_path, ROMSize rom_size) {
+        auto result{ call(fmt::format(R"(-ExpandROM "{}" {})", rom_path.string(), romSizeToString(rom_size))) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to expand '{}' to {} using '{}'",
                 rom_path.string(), romSizeToString(rom_size), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::changeCompression(const fs::path &rom_path, CompressionOption option) {
-        auto succeeded{ call(fmt::format(R"(-ChangeCompression "{}" {})", rom_path.string(),
+    Result LunarMagicWrapper::changeCompression(const fs::path &rom_path, CompressionOption option) {
+        auto result{ call(fmt::format(R"(-ChangeCompression "{}" {})", rom_path.string(),
                                          compressionOptionToString(option))) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to change compression in '{}' to {} using '{}'",
                 rom_path.string(), compressionOptionToString(option),
                 lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::transferGlobalExanimation(const fs::path &source_rom_path,
+    Result LunarMagicWrapper::transferGlobalExanimation(const fs::path &source_rom_path,
                                                       const fs::path &destination_rom_path) {
-        auto succeeded{ call(fmt::format(R"(-TransferLevelGlobalExAnim "{}" "{}")",
+        auto result{ call(fmt::format(R"(-TransferLevelGlobalExAnim "{}" "{}")",
                                          destination_rom_path.string(), source_rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to transfer global ExAnimation from '{}' to '{}' using '{}'",
                 source_rom_path.string(), destination_rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::transferOverworld(const fs::path &source_rom_path, const fs::path &destination_rom_path) {
-        auto succeeded{ call(fmt::format(R"(-TransferOverworld "{}" "{}")",
+    Result LunarMagicWrapper::transferOverworld(const fs::path &source_rom_path, const fs::path &destination_rom_path) {
+        auto result{ call(fmt::format(R"(-TransferOverworld "{}" "{}")",
                                          destination_rom_path.string(), source_rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to transfer overworld from '{}' to '{}' using '{}'",
                 source_rom_path.string(), destination_rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::transferTitleScreen(const fs::path &source_rom_path, const fs::path &destination_rom_path) {
-        auto succeeded{ call(fmt::format(R"(-TransferTitleScreen "{}" "{}")",
+    Result LunarMagicWrapper::transferTitleScreen(const fs::path &source_rom_path, const fs::path &destination_rom_path) {
+        auto result{ call(fmt::format(R"(-TransferTitleScreen "{}" "{}")",
                                          destination_rom_path.string(), source_rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to transfer title screen from '{}' to '{}' using '{}'",
                 source_rom_path.string(), destination_rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::transferCredits(const fs::path &source_rom_path, const fs::path &destination_rom_path) {
-        auto succeeded{ call(fmt::format(R"(-TransferCredits "{}" "{}")",
+    Result LunarMagicWrapper::transferCredits(const fs::path &source_rom_path, const fs::path &destination_rom_path) {
+        auto result{ call(fmt::format(R"(-TransferCredits "{}" "{}")",
                                          destination_rom_path.string(), source_rom_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to transfer credits from '{}' to '{}' using '{}'",
                 source_rom_path.string(), destination_rom_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::exportTitleMoves(const fs::path &rom_path, const fs::path &title_moves_path) {
-        auto succeeded{ call(fmt::format(R"(-ExportTitleMoves "{}" "{}")",
+    Result LunarMagicWrapper::exportTitleMoves(const fs::path &rom_path, const fs::path &title_moves_path) {
+        auto result{ call(fmt::format(R"(-ExportTitleMoves "{}" "{}")",
                                          rom_path.string(), title_moves_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to export title moves from '{}' to '{}' using '{}'",
                 rom_path.string(), title_moves_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 
-    void LunarMagicWrapper::importTitleMoves(const fs::path &rom_path, const fs::path &title_moves_path) {
-        auto succeeded{ call(fmt::format(R"(-ImportTitleMoves "{}" "{}")",
+    Result LunarMagicWrapper::importTitleMoves(const fs::path &rom_path, const fs::path &title_moves_path) {
+        auto result{ call(fmt::format(R"(-ImportTitleMoves "{}" "{}")",
                                          rom_path.string(), title_moves_path.string())) };
 
-        if (!succeeded) {
+        if (!result.succeeded) {
             throw LunarMagicWrapperException(fmt::format(
                 "Failed to import title moves from '{}' into '{}' using '{}'",
                 rom_path.string(), title_moves_path.string(), lunar_magic_path.string()
-            ));
+            ), result);
         }
+
+        return result;
     }
 } // lunar_magic_wrapper
