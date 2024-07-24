@@ -6,7 +6,7 @@
 //! relies on `cmd` to invoke Lunar Magic, as this is currently
 //! the only way I'm aware of to capture its text output.
 
-use std::{fs::File, io::{BufRead, BufReader}, path::PathBuf, process::Command};
+use std::{error::Error, fmt, fs::File, io::{BufRead, BufReader}, path::PathBuf, process::Command};
 
 use tempfile::tempdir;
 use bitflags::bitflags;
@@ -22,7 +22,7 @@ pub struct LunarMagicWrapper {
 /// Contains errors raised as a result of an operation using 
 /// a [LunarMagicWrapper].
 #[derive(Debug)]
-pub enum Error {
+pub enum WrapperErr {
     /// Raised when no Lunar Magic is found at the path given to the wrapper.
     LunarMagicMissing{ command: String },
 
@@ -38,6 +38,60 @@ pub enum Error {
     /// Raised when no temporary directory to keep the Lunar Magic log
     /// file could be created.
     NoTempDir{ command: String },
+}
+
+impl fmt::Display for WrapperErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let err_msg = match self {
+            WrapperErr::LunarMagicMissing { command } => {
+                format!("Lunar Magic not found while performing operation '{}'", command)
+            },
+            WrapperErr::Operation { code, command, output } => {
+                if let Some(code) = code {
+                    format!(
+                        "Lunar Magic returned with error code {} while performing operation '{}' \
+                        with the following output:\n\t{}",
+                        code, command, output.join("\n\t")
+                    )
+                } else {
+                    format!(
+                        "Lunar Magic failed while performing operation '{}' \
+                        with the following output:\n\t{}",
+                        command, output.join("\n\t")
+                    )
+                }
+            },
+            WrapperErr::FailedToExecute { command } => {
+                format!(
+                    "Failed to execute Lunar Magic while attempting to perform \
+                    operation '{}'",
+                    command
+                )
+            },
+            WrapperErr::NoTempDir { command } => {
+                format!(
+                    "Failed to create temporary folder while attempting to perform \
+                    operation '{}'",
+                    command
+                )
+            },
+            WrapperErr::NoTempFile { command } => {
+                format!(
+                    "Failed to read temporary log file while attempting to perform \
+                    operation '{}'",
+                    command
+                )
+            }
+        };
+
+        write!(f, "{}", err_msg)
+    }
+}
+
+impl Error for WrapperErr {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
 }
 
 /// Contains all valid ROM sizes that can be used with
@@ -66,8 +120,8 @@ impl ToString for RomSize {
 /// Result of invoking an operation through a [LunarMagicWrapper].
 /// 
 /// Contains the text output of Lunar Magic if the operation succeeded
-/// or an [Error] otherwise.
-pub type ResultL = Result<Vec<String>, Error>;
+/// or a [WrapperErr] otherwise.
+pub type ResultL = Result<Vec<String>, WrapperErr>;
 
 /// Contains all valid ROM compression formats that can be used with
 /// [LunarMagicWrapper::change_compression].
@@ -123,7 +177,7 @@ impl LunarMagicWrapper {
         LunarMagicWrapper { lunar_magic_path: path.into() }
     }
 
-    /// Exports Graphics from the passed ROM and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// Exports Graphics from the passed ROM and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// 
@@ -137,7 +191,7 @@ impl LunarMagicWrapper {
     }
 
     /// Exports ExGraphics from the passed ROM and returns Lunar Magic's 
-    /// text output or an [Error] if something went wrong.
+    /// text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// 
@@ -151,7 +205,7 @@ impl LunarMagicWrapper {
     }
 
     /// Imports Graphics into the passed ROM and returns Lunar Magic's 
-    /// text output or an [Error] if something went wrong.
+    /// text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// 
@@ -165,7 +219,7 @@ impl LunarMagicWrapper {
     }
 
     /// Imports ExGraphics into the passed ROM and returns Lunar Magic's 
-    /// text output or an [Error] if something went wrong.
+    /// text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// 
@@ -179,7 +233,7 @@ impl LunarMagicWrapper {
     }
 
     /// Imports all graphics into the passed ROM and returns Lunar Magic's 
-    /// text output or an [Error] if something went wrong.
+    /// text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// 
@@ -193,7 +247,7 @@ impl LunarMagicWrapper {
     }
 
     /// Exports the specified level number as an MWL at the specified location from the passed ROM
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     ///
     /// # Examples
     /// 
@@ -218,7 +272,7 @@ impl LunarMagicWrapper {
 
     /// Imports the specified MWL file as the (optionally) specified level number
     /// into the passed ROM and returns Lunar Magic's text output or 
-    /// an [Error] if something went wrong.
+    /// a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// 
@@ -229,7 +283,7 @@ impl LunarMagicWrapper {
     /// let output = lm_wrapper.import_level(
     ///     "C:/hacks/my_project/my_hack.smc",
     ///     "C:/hacks/my_project/levels/level 105.mwl",
-    ///     Option::None
+    ///     None
     /// );
     /// ```
     /// 
@@ -263,7 +317,7 @@ impl LunarMagicWrapper {
 
     /// Imports the specified map16 file into the passed ROM at the (optionally)
     /// specified X, Y map16 location using the tileset of the specified level
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// 
@@ -275,7 +329,7 @@ impl LunarMagicWrapper {
     ///     "C:/hacks/my_project/my_hack.smc",
     ///     "C:/hacks/my_project/resources/tiles.map16",
     ///     105,
-    ///     Option::None
+    ///     None
     /// );
     /// ```
     /// 
@@ -316,7 +370,7 @@ impl LunarMagicWrapper {
     }
 
     /// Imports the passed custom palette file into the specified level in the passed 
-    /// ROM and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// ROM and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -337,7 +391,7 @@ impl LunarMagicWrapper {
     }
 
     /// Exports shared palette from the passed ROM to the specified output path
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -356,7 +410,7 @@ impl LunarMagicWrapper {
     }
 
     /// Imports passed shared palette into the passed ROM
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -375,7 +429,7 @@ impl LunarMagicWrapper {
     }
 
     /// Exports all map16 data from the passed ROM to the specified output path
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -394,7 +448,7 @@ impl LunarMagicWrapper {
     }
 
     /// Imports the passed all map16 file into the passed ROM
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -414,7 +468,7 @@ impl LunarMagicWrapper {
 
     /// Exports multiple levels from the passed ROM to the specified 
     /// location using the (optionally) specified flags and returns 
-    /// Lunar Magic's text output or an [Error] if something went wrong.
+    /// Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// Flags can be specified using the [LevelExportFlag] enum.
     /// Note that if flags are omitted, Lunar Magic will use its 
@@ -431,7 +485,7 @@ impl LunarMagicWrapper {
     /// let output = lm_wrapper.export_mult_levels(
     ///     "C:/hacks/my_project/my_hack.smc",
     ///     "C:/hacks/my_project/resources/levels/level ",
-    ///     Option::None
+    ///     None
     /// );
     /// ```
     /// 
@@ -468,7 +522,7 @@ impl LunarMagicWrapper {
 
     /// Imports multiple levels into the passed ROM from the specified 
     /// location using the (optionally) specified flags and returns 
-    /// Lunar Magic's text output or an [Error] if something went wrong.
+    /// Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// Flags can be specified using the [LevelImportFlag] enum.
     /// Note that if flags are omitted, Lunar Magic will use its 
@@ -483,7 +537,7 @@ impl LunarMagicWrapper {
     /// let output = lm_wrapper.import_mult_levels(
     ///     "C:/hacks/my_project/my_hack.smc",
     ///     "C:/hacks/my_project/resources/levels",
-    ///     Option::None
+    ///     None
     /// );
     /// ```
     /// 
@@ -518,7 +572,7 @@ impl LunarMagicWrapper {
 
     /// Expands the passed ROM to the specified size 
     /// and returns Lunar Magic's text output or an 
-    /// [Error] if something went wrong.
+    /// [WrapperErr] if something went wrong.
     ///
     /// # Examples
     /// ```
@@ -529,8 +583,7 @@ impl LunarMagicWrapper {
     ///     RomSize::_4mb
     /// );
     /// ```
-    pub fn expand_rom(&self, rom_path: &str, rom_size: RomSize) -> ResultL
-    {
+    pub fn expand_rom(&self, rom_path: &str, rom_size: RomSize) -> ResultL {
         self.run_command(&format!(
             "-ExpandROM {} {}",
             rom_path,
@@ -539,7 +592,7 @@ impl LunarMagicWrapper {
     }
 
     /// Changes the compression of the passed ROM to the specified format 
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     ///
     /// # Examples
     /// ```
@@ -560,7 +613,7 @@ impl LunarMagicWrapper {
     }
 
     /// Transfers level global ExAnimation data from source ROM to destination ROM and 
-    /// return Lunar Magic's text output or an [Error] if something went wrong.
+    /// return Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -579,7 +632,7 @@ impl LunarMagicWrapper {
     }
 
     /// Transfers overworld data from source ROM to destination ROM and 
-    /// return Lunar Magic's text output or an [Error] if something went wrong.
+    /// return Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -598,7 +651,7 @@ impl LunarMagicWrapper {
     }
 
     /// Transfers title screen data from source ROM to destination ROM and 
-    /// return Lunar Magic's text output or an [Error] if something went wrong.
+    /// return Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -617,7 +670,7 @@ impl LunarMagicWrapper {
     }
 
     /// Transfers credit data from source ROM to destination ROM and 
-    /// return Lunar Magic's text output or an [Error] if something went wrong.
+    /// return Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -636,7 +689,7 @@ impl LunarMagicWrapper {
     }
 
     /// Exports title screen movement data from the passed ROM to the specified location
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -655,7 +708,7 @@ impl LunarMagicWrapper {
     }
 
     /// Imports title screen movement data into the passed ROM from the specified location
-    /// and returns Lunar Magic's text output or an [Error] if something went wrong.
+    /// and returns Lunar Magic's text output or a [WrapperErr] if something went wrong.
     /// 
     /// # Examples
     /// ```
@@ -675,7 +728,7 @@ impl LunarMagicWrapper {
 
     fn run_command(&self, command_string: &str) -> ResultL {
         if !self.lunar_magic_path.exists() {
-            return Err(LunarMagicError::LunarMagicMissing { command: format!("{} {}",
+            return Err(WrapperErr::LunarMagicMissing { command: format!("{} {}",
                 self.lunar_magic_path.to_string_lossy().to_string(),
                 command_string
             ) });
@@ -714,18 +767,18 @@ impl LunarMagicWrapper {
                     let output = lines.map(|l| l.expect("Failed to read line")).collect();
 
                     if !result.status.success() {
-                        return Err(LunarMagicError::OperationError { code: result.status.code(), command: main_command, output })
+                        return Err(WrapperErr::Operation { code: result.status.code(), command: main_command, output })
                     } else {
                         return Ok(output);
                     }
                 } else {
-                    return Err(LunarMagicError::NoTempFile { command: main_command })
+                    return Err(WrapperErr::NoTempFile { command: main_command })
                 }
             } else {
-                return Err(LunarMagicError::FailedToExecute { command: main_command });
+                return Err(WrapperErr::FailedToExecute { command: main_command });
             }
         } else {
-            return Err(LunarMagicError::NoTempDir { command: main_command });
+            return Err(WrapperErr::NoTempDir { command: main_command });
         }
     }
 }
