@@ -5,6 +5,7 @@ edition = "2021"
 description = "A lightweight wrapper around the command line functionality of Lunar Magic, a commonly used Super Mario World editor."
 keywords = ["smw", "lunar magic", "wrapper", "lm"]
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/Callisto-Build-System/lunar-magic-wrapper"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
