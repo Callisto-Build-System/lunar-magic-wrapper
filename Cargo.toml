@@ -3,7 +3,7 @@ name = "lunar-magic-wrapper"
 version = "0.1.0"
 edition = "2021"
 description = "A lightweight wrapper around the command line functionality of Lunar Magic, a commonly used Super Mario World editor."
-keywords = ["smw", "lunar magic", "wrapper", "lm"]
+keywords = ["smw", "lunar_magic", "wrapper", "lm"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Callisto-Build-System/lunar-magic-wrapper"
 
