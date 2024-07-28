@@ -1,6 +1,6 @@
 [package]
 name = "lunar-magic-wrapper"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "A lightweight wrapper around the command line functionality of Lunar Magic, a commonly used Super Mario World editor."
 keywords = ["smw", "lunar_magic", "wrapper", "lm"]
